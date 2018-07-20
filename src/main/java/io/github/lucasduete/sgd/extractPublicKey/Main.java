@@ -15,6 +15,7 @@ public class Main {
     private static final String ALIAS = "myRsaKeys";
     private static final String PASSWORD = "2049683517";
     private static final String KEYSTORAGE_NAME = "keystorage.rsa";
+    private static final String PUBLIC_KEY_NAME = "lucasduete.pub";
 
     public static void main(String[] args) throws Exception {
         System.out.printf("\n\n");
@@ -22,11 +23,16 @@ public class Main {
 
         savePublicKey(key);
 
-        System.out.println("Verificação de integridade da chave exportada" + test());
+        System.out.println("Verificação de integridade da chave exportada: " + testeIntegridade());
+        System.out.println("Verificação de paridade de criptografia: " + testeCriptografia());
     }
 
     private static PublicKey getPublicKey() throws Exception {
         return getKeyStore().getCertificate(ALIAS).getPublicKey();
+    }
+
+    private static PrivateKey getPrivateKey() throws Exception {
+        return (PrivateKey) getKeyStore().getKey(ALIAS, PASSWORD.toCharArray());
     }
 
 
@@ -48,8 +54,8 @@ public class Main {
         System.out.println("Chave Salva");
     }
 
-    private static boolean test() throws Exception {
-        byte[] keyByte = Files.readAllBytes(Paths.get("lucasduete.pub"));
+    private static boolean testeIntegridade() throws Exception {
+        byte[] keyByte = Files.readAllBytes(Paths.get(PUBLIC_KEY_NAME));
 
         PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(keyByte));
 
@@ -57,7 +63,23 @@ public class Main {
         boolean bytesEquals = Arrays.equals(keyByte, getPublicKey().getEncoded());
         boolean keyEncodedEquals = Arrays.equals(publicKey.getEncoded(), getPublicKey().getEncoded());
 
-
         return keyEquals == bytesEquals == keyEncodedEquals;
+    }
+
+    private static boolean testeCriptografia() throws Exception {
+        byte[] keyByte = Files.readAllBytes(Paths.get(PUBLIC_KEY_NAME));
+
+        PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(keyByte));
+
+        PrivateKey privateKey = getPrivateKey();
+
+        RsaCryptoAlgorithm cryptoAlgorithm = new RsaCryptoAlgorithm();
+
+        final String content = "Hello World";
+
+        String encryptedContent = cryptoAlgorithm.crypt(content, privateKey);
+        String decryptedContent = cryptoAlgorithm.decrypt(encryptedContent, publicKey);
+
+        return decryptedContent.equals(content);
     }
 }
