@@ -22,7 +22,7 @@ public class Main {
 
         savePublicKey(key);
 
-//        System.out.println(test());
+        System.out.println("Verificação de integridade da chave exportada" + test());
     }
 
     private static PublicKey getPublicKey() throws Exception {
